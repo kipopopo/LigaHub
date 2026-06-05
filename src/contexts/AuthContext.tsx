@@ -89,11 +89,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       if (isFirebaseConfigured()) {
-        const { signInWithEmailAndPassword } = await import('firebase/auth');
-        const auth = getFirebaseAuth();
-        await signInWithEmailAndPassword(auth, email, password);
+        // Check if this is the demo admin login
+        const isDemoAdmin = email === DEMO_ADMIN_EMAIL && password === DEMO_ADMIN_PASSWORD;
+
+        try {
+          const { signInWithEmailAndPassword } = await import('firebase/auth');
+          const auth = getFirebaseAuth();
+          const cred = await signInWithEmailAndPassword(auth, email, password);
+
+          // Check Firestore for admin role
+          let role: UserRole = 'fan';
+          try {
+            const { doc, getDoc } = await import('firebase/firestore');
+            const { getFirebaseDb } = await import('@/lib/firebase');
+            const userDoc = await getDoc(doc(getFirebaseDb(), 'users', cred.user.uid));
+            if (userDoc.exists() && userDoc.data()?.role === 'admin') {
+              role = 'admin';
+            }
+          } catch {
+            // Firestore not set up yet — continue as fan
+          }
+
+          const appUser: AppUser = {
+            id: cred.user.uid,
+            email: cred.user.email || email,
+            displayName: cred.user.displayName || email.split('@')[0],
+            photoUrl: cred.user.photoURL || '',
+            createdAt: new Date().toISOString(),
+            favoriteTeams: [],
+            role,
+            language: 'en',
+          };
+          persistUser(appUser);
+        } catch (firebaseErr) {
+          // If Firebase auth failed but credentials are demo admin, use demo mode
+          if (isDemoAdmin) {
+            await new Promise((r) => setTimeout(r, 500));
+            const demoUser: AppUser = {
+              id: 'demo-admin',
+              email: DEMO_ADMIN_EMAIL,
+              displayName: 'Admin',
+              photoUrl: '',
+              createdAt: new Date().toISOString(),
+              favoriteTeams: [],
+              role: 'admin',
+              language: 'en',
+            };
+            persistUser(demoUser);
+          } else {
+            throw firebaseErr;
+          }
+        }
       } else {
-        // Demo mode
+        // Full demo mode (no Firebase configured)
         await new Promise((r) => setTimeout(r, 800));
         const role: UserRole =
           email === DEMO_ADMIN_EMAIL && password === DEMO_ADMIN_PASSWORD
@@ -112,7 +160,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         persistUser(demoUser);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const msg = err instanceof Error ? err.message : 'Login failed';
+      // Clean up Firebase error messages for display
+      const cleanMsg = msg
+        .replace('Firebase: Error (auth/', '')
+        .replace(').', '')
+        .replace('auth/', '');
+      setError(cleanMsg);
       throw err;
     } finally {
       setLoading(false);
