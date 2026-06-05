@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { teams, fixtures, scores, groups } from '@/lib/placeholder-data';
 import { getGroupStandings } from '@/lib/standings';
+import Legend from '@/components/ui/Legend';
 import type { Category } from '@/types';
 import styles from './page.module.css';
 
@@ -13,10 +14,27 @@ export default function StandingsPage() {
 
   const categoryGroups = groups.filter((g) => g.category === category);
 
+  const standingsLegend = [
+    { abbr: 'Pos', meaning: t('legend.pos') },
+    { abbr: t('standings.p'), meaning: t('legend.p') },
+    { abbr: t('standings.w'), meaning: t('legend.w'), color: '#22c55e' },
+    { abbr: t('standings.d'), meaning: t('legend.d'), color: '#f59e0b' },
+    { abbr: t('standings.l'), meaning: t('legend.l'), color: '#ef4444' },
+    { abbr: t('standings.gf'), meaning: t('legend.gf') },
+    { abbr: t('standings.ga'), meaning: t('legend.ga') },
+    { abbr: t('standings.gd'), meaning: t('legend.gd') },
+    { abbr: t('standings.pts'), meaning: t('legend.pts'), color: '#a78bfa' },
+    { abbr: 'W', meaning: t('legend.formW'), color: '#22c55e' },
+    { abbr: 'D', meaning: t('legend.formD'), color: '#f59e0b' },
+    { abbr: 'L', meaning: t('legend.formL'), color: '#ef4444' },
+    { abbr: '🟢', meaning: t('legend.qualified') },
+  ];
+
   return (
     <div className="container" id="standings-page">
       <div className={styles.pageHeader}>
         <h1 className="heading-2">{t('standings.title')}</h1>
+        <Legend items={standingsLegend} />
       </div>
 
       {/* Category Tabs */}

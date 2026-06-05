@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { fixtures, getTeamById, getScoreByFixture } from '@/lib/placeholder-data';
+import Legend from '@/components/ui/Legend';
 import type { Category, MatchStatus } from '@/types';
 import styles from './page.module.css';
 
@@ -10,6 +11,13 @@ export default function FixturesPage() {
   const { t } = useI18n();
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<MatchStatus | 'all'>('all');
+
+  const fixturesLegend = [
+    { abbr: 'FT', meaning: t('legend.ft'), color: '#22c55e' },
+    { abbr: '● LIVE', meaning: t('legend.live'), color: '#ef4444' },
+    { abbr: 'U15', meaning: t('legend.u15'), color: '#6366f1' },
+    { abbr: 'U17', meaning: t('legend.u17'), color: '#8b5cf6' },
+  ];
 
   const filteredFixtures = fixtures.filter((f) => {
     if (categoryFilter !== 'all' && f.category !== categoryFilter) return false;
@@ -34,6 +42,7 @@ export default function FixturesPage() {
     <div className="container" id="fixtures-page">
       <div className={styles.pageHeader}>
         <h1 className="heading-2">{t('fixtures.title')}</h1>
+        <Legend items={fixturesLegend} />
       </div>
 
       {/* Filters */}

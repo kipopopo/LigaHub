@@ -14,6 +14,7 @@ import {
   getTeamById,
   getScoreByFixture,
 } from '@/lib/placeholder-data';
+import Legend from '@/components/ui/Legend';
 import styles from './page.module.css';
 
 export default function TeamProfilePage() {
@@ -74,16 +75,26 @@ export default function TeamProfilePage() {
 
       {/* Tabs */}
       <div className="container">
-        <div className="tabs" style={{ marginBottom: 'var(--space-xl)', marginTop: 'var(--space-lg)', width: 'fit-content' }}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-md)', marginTop: 'var(--space-lg)', marginBottom: 'var(--space-xl)', flexWrap: 'wrap' }}>
+          <div className="tabs" style={{ width: 'fit-content' }}>
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <Legend items={[
+            { abbr: '⚽', meaning: t('legend.goals') },
+            { abbr: '🅰️', meaning: t('legend.assists') },
+            { abbr: '👕', meaning: t('legend.apps') },
+            { abbr: 'FT', meaning: t('legend.ft'), color: '#22c55e' },
+            { abbr: 'U15', meaning: t('legend.u15'), color: '#6366f1' },
+            { abbr: 'U17', meaning: t('legend.u17'), color: '#8b5cf6' },
+          ]} />
         </div>
 
         {/* Squad Tab */}
