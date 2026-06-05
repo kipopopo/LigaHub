@@ -127,6 +127,20 @@ export const en: Record<string, string> = {
   'match.today': 'Today',
   'match.tomorrow': 'Tomorrow',
 
+  // Match detail
+  'match.detail.events': 'Match Events',
+  'match.detail.firstHalf': '1st Half',
+  'match.detail.secondHalf': '2nd Half',
+  'match.detail.stats': 'Match Statistics',
+  'match.detail.lineups': 'Lineups',
+  'match.detail.substitutes': 'Substitutes',
+  'match.detail.possession': 'Possession',
+  'match.detail.shots': 'Total Shots',
+  'match.detail.shotsOnTarget': 'Shots on Target',
+  'match.detail.corners': 'Corners',
+  'match.detail.fouls': 'Fouls',
+  'match.detail.upcoming': 'Match details will be available after kickoff.',
+
   // Categories
   'category.all': 'All Categories',
   'category.u15': 'Under 15',

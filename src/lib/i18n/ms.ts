@@ -127,6 +127,20 @@ export const ms: Record<string, string> = {
   'match.today': 'Hari Ini',
   'match.tomorrow': 'Esok',
 
+  // Match detail
+  'match.detail.events': 'Peristiwa Perlawanan',
+  'match.detail.firstHalf': 'Separuh Masa Pertama',
+  'match.detail.secondHalf': 'Separuh Masa Kedua',
+  'match.detail.stats': 'Statistik Perlawanan',
+  'match.detail.lineups': 'Barisan Pemain',
+  'match.detail.substitutes': 'Pemain Gantian',
+  'match.detail.possession': 'Penguasaan Bola',
+  'match.detail.shots': 'Jumlah Rembatan',
+  'match.detail.shotsOnTarget': 'Rembatan Ke Gol',
+  'match.detail.corners': 'Sepakan Sudut',
+  'match.detail.fouls': 'Kesalahan',
+  'match.detail.upcoming': 'Butiran perlawanan akan tersedia selepas permulaan.',
+
   // Categories
   'category.all': 'Semua Kategori',
   'category.u15': 'Bawah 15',

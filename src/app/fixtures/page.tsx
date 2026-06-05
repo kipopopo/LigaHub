@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { fixtures, getTeamById, getScoreByFixture } from '@/lib/placeholder-data';
 import Legend from '@/components/ui/Legend';
-import type { Category, MatchStatus } from '@/types';
+import MatchDetail from '@/components/match/MatchDetail';
+import type { Category, MatchStatus, Fixture } from '@/types';
 import styles from './page.module.css';
 
 export default function FixturesPage() {
   const { t } = useI18n();
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<MatchStatus | 'all'>('all');
+  const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
 
   const fixturesLegend = [
     { abbr: 'FT', meaning: t('legend.ft'), color: '#22c55e' },
@@ -88,7 +90,7 @@ export default function FixturesPage() {
                 const score = getScoreByFixture(fixture.id);
 
                 return (
-                  <div key={fixture.id} className={`glass-card ${styles.fixtureCard}`}>
+                  <div key={fixture.id} className={`glass-card ${styles.fixtureCard}`} onClick={() => setSelectedFixture(fixture)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSelectedFixture(fixture)}>
                     <div className={styles.fixtureLeft}>
                       <span className={`badge ${fixture.status === 'completed' ? 'badge-success' : fixture.status === 'live' ? 'badge-live' : 'badge-primary'}`}>
                         {fixture.status === 'completed' ? 'FT' : fixture.status === 'live' ? '● LIVE' : fixture.category}
@@ -129,6 +131,15 @@ export default function FixturesPage() {
             </div>
           </div>
         ))
+      )}
+
+      {/* Match Detail Modal */}
+      {selectedFixture && (
+        <MatchDetail
+          fixture={selectedFixture}
+          score={getScoreByFixture(selectedFixture.id)}
+          onClose={() => setSelectedFixture(null)}
+        />
       )}
     </div>
   );

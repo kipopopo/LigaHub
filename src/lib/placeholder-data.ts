@@ -353,17 +353,110 @@ export const fixtures: Fixture[] = [
 ];
 
 // ---------- Scores (for completed fixtures) ----------
+function generateMatchEvents(fixture: Fixture, homeScore: number, awayScore: number): Score['events'] {
+  const events: Score['events'] = [];
+  const homePlayers = players.filter((p) => p.teamId === fixture.homeTeamId);
+  const awayPlayers = players.filter((p) => p.teamId === fixture.awayTeamId);
+  let eventId = 0;
+
+  // Generate goal events
+  const usedMinutes = new Set<number>();
+  const getMinute = () => {
+    let m;
+    do { m = 5 + Math.floor(Math.random() * 85); } while (usedMinutes.has(m));
+    usedMinutes.add(m);
+    return m;
+  };
+
+  for (let i = 0; i < homeScore; i++) {
+    const scorers = homePlayers.filter((p) => p.position === 'Forward' || p.position === 'Midfielder');
+    const scorer = scorers[i % scorers.length];
+    const assisters = homePlayers.filter((p) => p.id !== scorer?.id && (p.position === 'Midfielder' || p.position === 'Forward'));
+    events.push({
+      id: `${fixture.id}-evt-${eventId++}`,
+      type: 'goal',
+      minute: getMinute(),
+      playerId: scorer?.id || homePlayers[0]?.id || '',
+      teamId: fixture.homeTeamId,
+      description: assisters.length > 0 ? `Assist: ${assisters[i % assisters.length]?.name}` : undefined,
+    });
+  }
+
+  for (let i = 0; i < awayScore; i++) {
+    const scorers = awayPlayers.filter((p) => p.position === 'Forward' || p.position === 'Midfielder');
+    const scorer = scorers[i % scorers.length];
+    const assisters = awayPlayers.filter((p) => p.id !== scorer?.id && (p.position === 'Midfielder' || p.position === 'Forward'));
+    events.push({
+      id: `${fixture.id}-evt-${eventId++}`,
+      type: 'goal',
+      minute: getMinute(),
+      playerId: scorer?.id || awayPlayers[0]?.id || '',
+      teamId: fixture.awayTeamId,
+      description: assisters.length > 0 ? `Assist: ${assisters[i % assisters.length]?.name}` : undefined,
+    });
+  }
+
+  // Generate 1-3 yellow cards per match
+  const yellowCount = 1 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < yellowCount; i++) {
+    const pool = i % 2 === 0 ? homePlayers : awayPlayers;
+    const defenders = pool.filter((p) => p.position === 'Defender' || p.position === 'Midfielder');
+    events.push({
+      id: `${fixture.id}-evt-${eventId++}`,
+      type: 'yellow_card',
+      minute: getMinute(),
+      playerId: defenders[i % defenders.length]?.id || pool[0]?.id || '',
+      teamId: i % 2 === 0 ? fixture.homeTeamId : fixture.awayTeamId,
+    });
+  }
+
+  // Occasional red card (20% chance)
+  if (Math.random() < 0.2) {
+    const pool = Math.random() > 0.5 ? homePlayers : awayPlayers;
+    events.push({
+      id: `${fixture.id}-evt-${eventId++}`,
+      type: 'red_card',
+      minute: getMinute(),
+      playerId: pool.filter((p) => p.position === 'Defender')[0]?.id || pool[0]?.id || '',
+      teamId: Math.random() > 0.5 ? fixture.homeTeamId : fixture.awayTeamId,
+    });
+  }
+
+  // Generate 2-4 substitutions per match
+  const subCount = 2 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < subCount; i++) {
+    const pool = i % 2 === 0 ? homePlayers : awayPlayers;
+    const outPlayer = pool[10 + (i % 5)] || pool[i % pool.length];
+    const inPlayer = pool[12 + (i % 3)] || pool[(i + 5) % pool.length];
+    events.push({
+      id: `${fixture.id}-evt-${eventId++}`,
+      type: 'substitution',
+      minute: 55 + Math.floor(Math.random() * 35),
+      playerId: outPlayer?.id || '',
+      teamId: i % 2 === 0 ? fixture.homeTeamId : fixture.awayTeamId,
+      description: `In: ${inPlayer?.name || 'Unknown'}`,
+    });
+  }
+
+  // Sort by minute
+  return events.sort((a, b) => a.minute - b.minute);
+}
+
 export const scores: Score[] = fixtures
   .filter((f) => f.status === 'completed')
-  .map((f) => ({
-    id: `score-${f.id}`,
-    fixtureId: f.id,
-    homeScore: Math.floor(Math.random() * 4),
-    awayScore: Math.floor(Math.random() * 4),
-    updatedAt: f.matchDate,
-    updatedBy: 'admin',
-    events: [],
-  }));
+  .map((f) => {
+    const homeScore = Math.floor(Math.random() * 4);
+    const awayScore = Math.floor(Math.random() * 4);
+    return {
+      id: `score-${f.id}`,
+      fixtureId: f.id,
+      homeScore,
+      awayScore,
+      updatedAt: f.matchDate,
+      updatedBy: 'admin',
+      events: generateMatchEvents(f, homeScore, awayScore),
+    };
+  });
 
 // ---------- Media ----------
 export const media: Media[] = [
@@ -444,6 +537,10 @@ export const media: Media[] = [
 // ---------- Helper Functions ----------
 export function getTeamById(id: string): Team | undefined {
   return teams.find((t) => t.id === id);
+}
+
+export function getPlayerById(id: string): Player | undefined {
+  return players.find((p) => p.id === id);
 }
 
 export function getTeamBySlug(slug: string): Team | undefined {
