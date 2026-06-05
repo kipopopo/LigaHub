@@ -1,0 +1,111 @@
+.authPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  position: relative;
+}
+
+.authGlow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(ellipse, oklch(0.55 0.22 265 / 0.15) 0%, transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.authCard {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: var(--glass-border);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.authHeader {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.authLogo {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 0 12px oklch(0.55 0.22 265 / 0.4));
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.authDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.authDivider::before,
+.authDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-subtle);
+}
+
+.googleBtn {
+  width: 100%;
+  gap: var(--space-sm);
+}
+
+.authFooter {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.authLink {
+  color: var(--color-primary-light);
+  font-weight: 600;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.authLink:hover {
+  color: var(--color-accent);
+}
+
+.demoHint {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-info-bg);
+  border: 1px solid oklch(0.65 0.18 240 / 0.2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--color-info);
+  text-align: center;
+}
+
+.errorMsg {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-danger-bg);
+  border: 1px solid oklch(0.65 0.22 25 / 0.2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  text-align: center;
+}

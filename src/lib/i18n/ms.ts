@@ -1,0 +1,152 @@
+export const ms: Record<string, string> = {
+  // Navigation
+  'nav.home': 'Utama',
+  'nav.fixtures': 'Jadual',
+  'nav.standings': 'Kedudukan',
+  'nav.teams': 'Pasukan',
+  'nav.media': 'Media',
+  'nav.profile': 'Profil',
+  'nav.login': 'Log Masuk',
+  'nav.register': 'Daftar',
+  'nav.admin': 'Admin',
+  'nav.logout': 'Log Keluar',
+
+  // Homepage
+  'home.hero.title': 'Liga Bola Sepak Belia',
+  'home.hero.subtitle': 'Platform kejohanan bola sepak belia terkemuka',
+  'home.hero.cta': 'Lihat Jadual',
+  'home.countdown.title': 'Perlawanan Seterusnya',
+  'home.countdown.days': 'Hari',
+  'home.countdown.hours': 'Jam',
+  'home.countdown.minutes': 'Minit',
+  'home.countdown.seconds': 'Saat',
+  'home.live.title': 'Sedang Berlangsung',
+  'home.upcoming.title': 'Perlawanan Akan Datang',
+  'home.results.title': 'Keputusan Terkini',
+  'home.media.title': 'Media Pilihan',
+  'home.teams.title': 'Pasukan Peserta',
+  'home.viewAll': 'Lihat Semua',
+
+  // Fixtures
+  'fixtures.title': 'Jadual & Keputusan',
+  'fixtures.filter.all': 'Semua',
+  'fixtures.filter.upcoming': 'Akan Datang',
+  'fixtures.filter.live': 'Langsung',
+  'fixtures.filter.completed': 'Selesai',
+  'fixtures.round.group': 'Peringkat Kumpulan',
+  'fixtures.round.quarter': 'Suku Akhir',
+  'fixtures.round.semi': 'Separuh Akhir',
+  'fixtures.round.final': 'Akhir',
+  'fixtures.vs': 'lwn',
+  'fixtures.ft': 'TM',
+  'fixtures.noMatches': 'Tiada perlawanan ditemui',
+
+  // Standings
+  'standings.title': 'Kedudukan',
+  'standings.pos': 'Pos',
+  'standings.team': 'Pasukan',
+  'standings.p': 'M',
+  'standings.w': 'M',
+  'standings.d': 'S',
+  'standings.l': 'K',
+  'standings.gf': 'GM',
+  'standings.ga': 'GK',
+  'standings.gd': 'GB',
+  'standings.pts': 'Mata',
+  'standings.form': 'Prestasi',
+
+  // Teams
+  'teams.title': 'Pasukan',
+  'teams.squad': 'Skuad',
+  'teams.staff': 'Staf',
+  'teams.kits': 'Jersi',
+  'teams.fixtures': 'Jadual',
+  'teams.stats': 'Statistik',
+  'teams.players': 'Pemain',
+  'teams.coach': 'Ketua Jurulatih',
+
+  // Player
+  'player.goals': 'Gol',
+  'player.assists': 'Assist',
+  'player.yellowCards': 'Kad Kuning',
+  'player.redCards': 'Kad Merah',
+  'player.appearances': 'Penampilan',
+
+  // Media
+  'media.title': 'Hab Media',
+  'media.highlights': 'Sorotan',
+  'media.interviews': 'Temubual',
+  'media.photos': 'Gambar',
+  'media.all': 'Semua Media',
+  'media.watchNow': 'Tonton Sekarang',
+
+  // Auth
+  'auth.login.title': 'Selamat Kembali',
+  'auth.login.subtitle': 'Log masuk ke akaun LigaHub anda',
+  'auth.login.email': 'Alamat E-mel',
+  'auth.login.password': 'Kata Laluan',
+  'auth.login.submit': 'Log Masuk',
+  'auth.login.google': 'Teruskan dengan Google',
+  'auth.login.noAccount': 'Belum ada akaun?',
+  'auth.login.register': 'Daftar di sini',
+  'auth.register.title': 'Sertai LigaHub',
+  'auth.register.subtitle': 'Cipta akaun anda dan ikuti pasukan kegemaran anda',
+  'auth.register.name': 'Nama Penuh',
+  'auth.register.email': 'Alamat E-mel',
+  'auth.register.password': 'Kata Laluan',
+  'auth.register.confirmPassword': 'Sahkan Kata Laluan',
+  'auth.register.favoriteTeams': 'Pilih Pasukan Kegemaran',
+  'auth.register.submit': 'Cipta Akaun',
+  'auth.register.hasAccount': 'Sudah ada akaun?',
+  'auth.register.login': 'Log masuk di sini',
+
+  // Profile
+  'profile.title': 'Profil Saya',
+  'profile.overview': 'Gambaran',
+  'profile.favorites': 'Kegemaran',
+  'profile.favoriteTeams': 'Pasukan Kegemaran',
+  'profile.notifications': 'Pemberitahuan',
+  'profile.notificationPrefs': 'Tetapan Pemberitahuan',
+  'profile.settings': 'Tetapan',
+  'profile.language': 'Bahasa',
+  'profile.fan': 'Peminat',
+  'profile.displayName': 'Nama Paparan',
+  'profile.email': 'E-mel',
+
+  // Notifications
+  'notifications.title': 'Pemberitahuan',
+  'notifications.empty': 'Tiada pemberitahuan lagi',
+  'notifications.markAllRead': 'Tanda Semua Dibaca',
+  'notifications.scoreUpdate': 'Kemaskini Skor',
+  'notifications.matchReminder': 'Peringatan Perlawanan',
+
+  // Match status
+  'match.upcoming': 'Akan Datang',
+  'match.live': 'Langsung',
+  'match.completed': 'Tamat',
+  'match.today': 'Hari Ini',
+  'match.tomorrow': 'Esok',
+
+  // Categories
+  'category.all': 'Semua Kategori',
+  'category.u15': 'Bawah 15',
+  'category.u17': 'Bawah 17',
+
+  // Common
+  'common.loading': 'Memuatkan...',
+  'common.error': 'Sesuatu tidak kena',
+  'common.retry': 'Cuba Lagi',
+  'common.save': 'Simpan',
+  'common.cancel': 'Batal',
+  'common.delete': 'Padam',
+  'common.edit': 'Sunting',
+  'common.search': 'Cari',
+  'common.noResults': 'Tiada keputusan ditemui',
+
+  // Footer
+  'footer.rights': 'Hak cipta terpelihara.',
+  'footer.powered': 'Dikuasakan oleh LigaHub',
+  'footer.about': 'Tentang Kami',
+  'footer.contact': 'Hubungi',
+  'footer.privacy': 'Dasar Privasi',
+};

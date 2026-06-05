@@ -1,0 +1,135 @@
+.pageHeader {
+  margin-bottom: var(--space-xl);
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+@media (min-width: 768px) {
+  .filters {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+}
+
+.dateGroup {
+  margin-bottom: var(--space-xl);
+}
+
+.dateLabel {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.fixturesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.fixtureCard {
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .fixtureCard {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.fixtureLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 140px;
+}
+
+.fixtureRound {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.fixtureCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  flex: 1;
+}
+
+.fixtureTeam {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.fixtureTeam:last-child {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.fixtureLogo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.fixtureTeamName {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fixtureScore {
+  min-width: 70px;
+  text-align: center;
+}
+
+.fixtureTime {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-primary-light);
+}
+
+.fixtureRight {
+  min-width: 120px;
+  text-align: right;
+}
+
+.fixtureVenue {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-4xl);
+  color: var(--color-text-muted);
+  text-align: center;
+}

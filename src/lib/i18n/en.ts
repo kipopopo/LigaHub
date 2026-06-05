@@ -1,0 +1,152 @@
+export const en: Record<string, string> = {
+  // Navigation
+  'nav.home': 'Home',
+  'nav.fixtures': 'Fixtures',
+  'nav.standings': 'Standings',
+  'nav.teams': 'Teams',
+  'nav.media': 'Media',
+  'nav.profile': 'Profile',
+  'nav.login': 'Login',
+  'nav.register': 'Register',
+  'nav.admin': 'Admin',
+  'nav.logout': 'Logout',
+
+  // Homepage
+  'home.hero.title': 'Youth Football League',
+  'home.hero.subtitle': 'The premier youth football tournament platform',
+  'home.hero.cta': 'View Fixtures',
+  'home.countdown.title': 'Next Match',
+  'home.countdown.days': 'Days',
+  'home.countdown.hours': 'Hours',
+  'home.countdown.minutes': 'Minutes',
+  'home.countdown.seconds': 'Seconds',
+  'home.live.title': 'Live Now',
+  'home.upcoming.title': 'Upcoming Matches',
+  'home.results.title': 'Latest Results',
+  'home.media.title': 'Featured Media',
+  'home.teams.title': 'Participating Teams',
+  'home.viewAll': 'View All',
+
+  // Fixtures
+  'fixtures.title': 'Fixtures & Results',
+  'fixtures.filter.all': 'All',
+  'fixtures.filter.upcoming': 'Upcoming',
+  'fixtures.filter.live': 'Live',
+  'fixtures.filter.completed': 'Completed',
+  'fixtures.round.group': 'Group Stage',
+  'fixtures.round.quarter': 'Quarter Final',
+  'fixtures.round.semi': 'Semi Final',
+  'fixtures.round.final': 'Final',
+  'fixtures.vs': 'vs',
+  'fixtures.ft': 'FT',
+  'fixtures.noMatches': 'No matches found',
+
+  // Standings
+  'standings.title': 'Standings',
+  'standings.pos': 'Pos',
+  'standings.team': 'Team',
+  'standings.p': 'P',
+  'standings.w': 'W',
+  'standings.d': 'D',
+  'standings.l': 'L',
+  'standings.gf': 'GF',
+  'standings.ga': 'GA',
+  'standings.gd': 'GD',
+  'standings.pts': 'Pts',
+  'standings.form': 'Form',
+
+  // Teams
+  'teams.title': 'Teams',
+  'teams.squad': 'Squad',
+  'teams.staff': 'Staff',
+  'teams.kits': 'Kits',
+  'teams.fixtures': 'Fixtures',
+  'teams.stats': 'Statistics',
+  'teams.players': 'Players',
+  'teams.coach': 'Head Coach',
+
+  // Player
+  'player.goals': 'Goals',
+  'player.assists': 'Assists',
+  'player.yellowCards': 'Yellow Cards',
+  'player.redCards': 'Red Cards',
+  'player.appearances': 'Appearances',
+
+  // Media
+  'media.title': 'Media Hub',
+  'media.highlights': 'Highlights',
+  'media.interviews': 'Interviews',
+  'media.photos': 'Photos',
+  'media.all': 'All Media',
+  'media.watchNow': 'Watch Now',
+
+  // Auth
+  'auth.login.title': 'Welcome Back',
+  'auth.login.subtitle': 'Sign in to your LigaHub account',
+  'auth.login.email': 'Email Address',
+  'auth.login.password': 'Password',
+  'auth.login.submit': 'Sign In',
+  'auth.login.google': 'Continue with Google',
+  'auth.login.noAccount': "Don't have an account?",
+  'auth.login.register': 'Register here',
+  'auth.register.title': 'Join LigaHub',
+  'auth.register.subtitle': 'Create your account and follow your favorite teams',
+  'auth.register.name': 'Full Name',
+  'auth.register.email': 'Email Address',
+  'auth.register.password': 'Password',
+  'auth.register.confirmPassword': 'Confirm Password',
+  'auth.register.favoriteTeams': 'Select Favorite Teams',
+  'auth.register.submit': 'Create Account',
+  'auth.register.hasAccount': 'Already have an account?',
+  'auth.register.login': 'Sign in here',
+
+  // Profile
+  'profile.title': 'My Profile',
+  'profile.overview': 'Overview',
+  'profile.favorites': 'Favorites',
+  'profile.favoriteTeams': 'Favorite Teams',
+  'profile.notifications': 'Notifications',
+  'profile.notificationPrefs': 'Notification Preferences',
+  'profile.settings': 'Settings',
+  'profile.language': 'Language',
+  'profile.fan': 'Fan',
+  'profile.displayName': 'Display Name',
+  'profile.email': 'Email',
+
+  // Notifications
+  'notifications.title': 'Notifications',
+  'notifications.empty': 'No notifications yet',
+  'notifications.markAllRead': 'Mark All Read',
+  'notifications.scoreUpdate': 'Score Update',
+  'notifications.matchReminder': 'Match Reminder',
+
+  // Match status
+  'match.upcoming': 'Upcoming',
+  'match.live': 'Live',
+  'match.completed': 'Full Time',
+  'match.today': 'Today',
+  'match.tomorrow': 'Tomorrow',
+
+  // Categories
+  'category.all': 'All Categories',
+  'category.u15': 'Under 15',
+  'category.u17': 'Under 17',
+
+  // Common
+  'common.loading': 'Loading...',
+  'common.error': 'Something went wrong',
+  'common.retry': 'Try Again',
+  'common.save': 'Save',
+  'common.cancel': 'Cancel',
+  'common.delete': 'Delete',
+  'common.edit': 'Edit',
+  'common.search': 'Search',
+  'common.noResults': 'No results found',
+
+  // Footer
+  'footer.rights': 'All rights reserved.',
+  'footer.powered': 'Powered by LigaHub',
+  'footer.about': 'About',
+  'footer.contact': 'Contact',
+  'footer.privacy': 'Privacy Policy',
+};

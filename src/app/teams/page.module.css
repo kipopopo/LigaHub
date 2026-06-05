@@ -1,0 +1,137 @@
+.pageHeader {
+  margin-bottom: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-lg);
+}
+
+.teamCard {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--duration-base) var(--ease-spring);
+}
+
+.teamCard:hover {
+  transform: translateY(-4px);
+}
+
+.teamCardGlow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+  z-index: 0;
+}
+
+.teamCard:hover .teamCardGlow {
+  opacity: 1;
+}
+
+.teamCardInner {
+  position: relative;
+  z-index: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.teamCard:hover .teamCardInner {
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-lg);
+}
+
+.teamCardHeader {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.teamCardLogo {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teamCardLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform var(--duration-base) var(--ease-spring);
+}
+
+.teamCard:hover .teamCardLogo img {
+  transform: scale(1.1);
+}
+
+.teamCardName {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.teamCardDesc {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.teamCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.teamCardShort {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  letter-spacing: 0.05em;
+}
+
+.teamCardArrow {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.teamCard:hover .teamCardArrow {
+  color: var(--color-primary-light);
+  transform: translateX(4px);
+}
+
+.teamCardBorderGlow {
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-xl);
+  border: 2px solid;
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.teamCard:hover .teamCardBorderGlow {
+  opacity: 0.5;
+}
