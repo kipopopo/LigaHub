@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useI18n } from '@/lib/i18n';
-import { fixtures, getTeamById, getScoreByFixture } from '@/lib/placeholder-data';
+import { fixtures, getTeamById, getScoreByFixture, scores as placeholderScores } from '@/lib/placeholder-data';
+import { isFirebaseConfigured, getFirebaseDb } from '@/lib/firebase';
 import Legend from '@/components/ui/Legend';
 import MatchDetail from '@/components/match/MatchDetail';
-import type { Category, MatchStatus, Fixture } from '@/types';
+import type { Category, MatchStatus, Fixture, Score } from '@/types';
 import styles from './page.module.css';
 
 export default function FixturesPage() {
@@ -13,6 +14,29 @@ export default function FixturesPage() {
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<MatchStatus | 'all'>('all');
   const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
+  const [firestoreScores, setFirestoreScores] = useState<Score[]>([]);
+
+  // Load scores from Firestore
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+    (async () => {
+      try {
+        const { collection, getDocs } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        const snap = await getDocs(collection(db, 'scores'));
+        if (!snap.empty) {
+          setFirestoreScores(snap.docs.map((d) => d.data() as Score));
+        }
+      } catch {
+        // Firestore not available — use placeholder
+      }
+    })();
+  }, []);
+
+  // Helper: Firestore score takes priority over placeholder
+  const getScore = (fixtureId: string): Score | undefined => {
+    return firestoreScores.find((s) => s.fixtureId === fixtureId) || getScoreByFixture(fixtureId);
+  };
 
   const fixturesLegend = [
     { abbr: 'FT', meaning: t('legend.ft'), color: '#22c55e' },
@@ -87,7 +111,7 @@ export default function FixturesPage() {
               {dateFixtures.map((fixture) => {
                 const homeTeam = getTeamById(fixture.homeTeamId);
                 const awayTeam = getTeamById(fixture.awayTeamId);
-                const score = getScoreByFixture(fixture.id);
+                const score = getScore(fixture.id);
 
                 return (
                   <div key={fixture.id} className={`glass-card ${styles.fixtureCard}`} onClick={() => setSelectedFixture(fixture)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setSelectedFixture(fixture)}>
@@ -137,7 +161,7 @@ export default function FixturesPage() {
       {selectedFixture && (
         <MatchDetail
           fixture={selectedFixture}
-          score={getScoreByFixture(selectedFixture.id)}
+          score={getScore(selectedFixture.id)}
           onClose={() => setSelectedFixture(null)}
         />
       )}

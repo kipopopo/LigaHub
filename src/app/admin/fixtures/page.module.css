@@ -125,6 +125,207 @@
   flex-wrap: wrap;
 }
 
+/* ===================== Events Editor ===================== */
+.eventsEditor {
+  border-top: 1px dashed var(--color-border);
+  padding-top: var(--space-md);
+}
+
+.eventsTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-sm);
+}
+
+/* Events List */
+.eventsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: var(--space-md);
+}
+
+.eventItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-hover);
+  font-size: var(--text-xs);
+}
+
+.eventMinute {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  min-width: 28px;
+  text-align: center;
+}
+
+.eventIconBadge {
+  font-size: 0.85rem;
+}
+
+.eventPlayerName {
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventTeamBadge {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.6rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+}
+
+.eventDesc {
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eventRemoveBtn {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.eventRemoveBtn:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+/* Add Event Form */
+.addEventForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: var(--space-sm);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.addEventRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.eventSelect {
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  min-width: 0;
+}
+
+.eventSelect:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px oklch(0.55 0.22 265 / 0.15);
+}
+
+.eventMinuteInput {
+  width: 48px;
+  padding: 0.35rem 0.4rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-align: center;
+}
+
+.eventMinuteInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px oklch(0.55 0.22 265 / 0.15);
+}
+
+.eventMinuteLabel {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.eventDescInput {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+}
+
+.eventDescInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px oklch(0.55 0.22 265 / 0.15);
+}
+
+/* Team Toggle */
+.teamToggle {
+  display: flex;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.teamToggleBtn {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.teamToggleBtn:first-child {
+  border-right: 1px solid var(--color-border);
+}
+
+.teamToggleActive {
+  background: var(--color-primary);
+  color: white;
+}
+
 /* Toast */
 .toast {
   position: fixed;
