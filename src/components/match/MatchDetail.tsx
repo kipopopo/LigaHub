@@ -1,7 +1,7 @@
 'use client';
 
 import { useI18n } from '@/lib/i18n';
-import { getTeamById, getPlayerById, getPlayersByTeam } from '@/lib/placeholder-data';
+import { useTeams, usePlayers } from '@/lib/data-service';
 import type { Fixture, Score } from '@/types';
 import styles from './MatchDetail.module.css';
 
@@ -13,6 +13,8 @@ interface MatchDetailProps {
 
 export default function MatchDetail({ fixture, score, onClose }: MatchDetailProps) {
   const { t } = useI18n();
+  const { getTeamById } = useTeams();
+  const { getPlayersByTeam, getPlayerById } = usePlayers();
   const home = getTeamById(fixture.homeTeamId);
   const away = getTeamById(fixture.awayTeamId);
   const homePlayers = getPlayersByTeam(fixture.homeTeamId);

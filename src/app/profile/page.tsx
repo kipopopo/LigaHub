@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/contexts/AuthContext';
-import { teams, getTeamById } from '@/lib/placeholder-data';
+import { useTeams } from '@/lib/data-service';
 import styles from './page.module.css';
 
 export default function ProfilePage() {
   const { t } = useI18n();
   const { user, logout } = useAuth();
+  const { teams, getTeamById } = useTeams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [notifPrefs, setNotifPrefs] = useState({

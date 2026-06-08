@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
-import { teams } from '@/lib/placeholder-data';
+import { useTeams } from '@/lib/data-service';
 import type { Category } from '@/types';
 import styles from './page.module.css';
 
 export default function TeamsPage() {
   const { t } = useI18n();
+  const { teams } = useTeams();
   const [category, setCategory] = useState<Category | 'all'>('all');
 
   const filteredTeams = category === 'all' ? teams : teams.filter((team) => team.category === category);

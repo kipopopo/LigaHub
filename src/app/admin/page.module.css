@@ -97,3 +97,9 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
+
+/* Seed Section */
+.seedSection {
+  padding: var(--space-lg);
+  border: 1px dashed var(--color-border);
+}

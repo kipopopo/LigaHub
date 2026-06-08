@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
-import { teams, fixtures, scores, groups } from '@/lib/placeholder-data';
+import { useTeams, useFixtures, useScores, useGroups } from '@/lib/data-service';
 import { getGroupStandings } from '@/lib/standings';
 import Legend from '@/components/ui/Legend';
 import type { Category } from '@/types';
@@ -11,6 +11,10 @@ import styles from './page.module.css';
 export default function StandingsPage() {
   const { t } = useI18n();
   const [category, setCategory] = useState<Category>('U15');
+  const { teams } = useTeams();
+  const { fixtures } = useFixtures();
+  const { scores } = useScores();
+  const { groups } = useGroups();
 
   const categoryGroups = groups.filter((g) => g.category === category);
 

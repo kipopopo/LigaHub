@@ -4,16 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
-import {
-  teams,
-  getTeamBySlug,
-  getPlayersByTeam,
-  getStaffByTeam,
-  getKitsByTeam,
-  getFixturesByTeam,
-  getTeamById,
-  getScoreByFixture,
-} from '@/lib/placeholder-data';
+import { useTeams, usePlayers, useStaff, useKits, useFixtures, useScores } from '@/lib/data-service';
 import Legend from '@/components/ui/Legend';
 import styles from './page.module.css';
 
@@ -21,6 +12,12 @@ export default function TeamProfilePage() {
   const { t } = useI18n();
   const params = useParams();
   const slug = params.slug as string;
+  const { teams, getTeamBySlug, getTeamById } = useTeams();
+  const { getPlayersByTeam } = usePlayers();
+  const { getStaffByTeam } = useStaff();
+  const { getKitsByTeam } = useKits();
+  const { getFixturesByTeam } = useFixtures();
+  const { getScore } = useScores();
   const team = getTeamBySlug(slug);
   const [activeTab, setActiveTab] = useState('squad');
 
@@ -170,7 +167,7 @@ export default function TeamProfilePage() {
             {teamFixtures.map((fixture) => {
               const homeTeam = getTeamById(fixture.homeTeamId);
               const awayTeam = getTeamById(fixture.awayTeamId);
-              const score = getScoreByFixture(fixture.id);
+              const score = getScore(fixture.id);
 
               return (
                 <div key={fixture.id} className={`glass-card ${styles.fixtureCard}`}>

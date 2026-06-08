@@ -1,14 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { media as initialMedia } from '@/lib/placeholder-data';
+import { useMedia } from '@/lib/data-service';
+import { isFirebaseConfigured, getFirebaseDb } from '@/lib/firebase';
 import type { Media, MediaType, Category } from '@/types';
 import styles from './page.module.css';
 
 export default function AdminMediaPage() {
+  const { media: initialMedia } = useMedia();
   const [mediaState, setMediaState] = useState<Media[]>([...initialMedia]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [toast, setToast] = useState('');
+
+  // Sync from hook when data loads
+  useState(() => { setMediaState([...initialMedia]); });
 
   // New media form state
   const [newTitle, setNewTitle] = useState('');
@@ -22,7 +27,7 @@ export default function AdminMediaPage() {
     setTimeout(() => setToast(''), 3000);
   };
 
-  const addMedia = () => {
+  const addMedia = async () => {
     if (!newTitle || !newUrl) return;
     const newItem: Media = {
       id: `media-new-${Date.now()}`,
@@ -36,6 +41,16 @@ export default function AdminMediaPage() {
       publishedAt: new Date().toISOString(),
       tags: [newType, newCategory.toLowerCase()],
     };
+
+    // Save to Firestore
+    if (isFirebaseConfigured()) {
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        await setDoc(doc(db, 'media', newItem.id), newItem);
+      } catch { /* continue with local */ }
+    }
+
     setMediaState((prev) => [newItem, ...prev]);
     setShowAddForm(false);
     setNewTitle('');
@@ -44,7 +59,14 @@ export default function AdminMediaPage() {
     showToast('✅ Media item added!');
   };
 
-  const deleteMedia = (id: string) => {
+  const deleteMedia = async (id: string) => {
+    if (isFirebaseConfigured()) {
+      try {
+        const { doc, deleteDoc } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        await deleteDoc(doc(db, 'media', id));
+      } catch { /* continue with local */ }
+    }
     setMediaState((prev) => prev.filter((m) => m.id !== id));
     showToast('🗑️ Media item removed');
   };

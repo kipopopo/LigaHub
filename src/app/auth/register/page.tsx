@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/contexts/AuthContext';
-import { teams } from '@/lib/placeholder-data';
+import { useTeams } from '@/lib/data-service';
 import styles from '../login/page.module.css';
 import regStyles from './page.module.css';
 
 export default function RegisterPage() {
   const { t } = useI18n();
   const { register, error: authError } = useAuth();
+  const { teams } = useTeams();
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

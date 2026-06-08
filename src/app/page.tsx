@@ -2,11 +2,14 @@
 
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
-import { tournament, teams, fixtures, scores, media, getTeamById, getScoreByFixture } from '@/lib/placeholder-data';
+import { useTeams, useFixtures, useScores, useMedia, useTournament } from '@/lib/data-service';
 import styles from './page.module.css';
 
 function CountdownTimer() {
   const { t } = useI18n();
+  const { fixtures } = useFixtures();
+  const { getTeamById } = useTeams();
+
   // Find next upcoming fixture
   const nextFixture = fixtures.find((f) => f.status === 'upcoming');
   if (!nextFixture) return null;
@@ -54,11 +57,15 @@ function CountdownTimer() {
 }
 
 function MatchCard({ fixtureId }: { fixtureId: string }) {
+  const { fixtures } = useFixtures();
+  const { getTeamById } = useTeams();
+  const { getScore } = useScores();
+
   const fixture = fixtures.find((f) => f.id === fixtureId);
   if (!fixture) return null;
   const homeTeam = getTeamById(fixture.homeTeamId);
   const awayTeam = getTeamById(fixture.awayTeamId);
-  const score = getScoreByFixture(fixture.id);
+  const score = getScore(fixture.id);
 
   return (
     <div className={`glass-card ${styles.matchCard}`}>
@@ -98,6 +105,10 @@ function MatchCard({ fixtureId }: { fixtureId: string }) {
 
 export default function HomePage() {
   const { t } = useI18n();
+  const { tournament } = useTournament();
+  const { teams } = useTeams();
+  const { fixtures } = useFixtures();
+  const { media } = useMedia();
 
   const completedFixtures = fixtures.filter((f) => f.status === 'completed').slice(0, 4);
   const upcomingFixtures = fixtures.filter((f) => f.status === 'upcoming').slice(0, 6);

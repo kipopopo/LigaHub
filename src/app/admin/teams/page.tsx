@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { teams as initialTeams, getPlayersByTeam, getStaffByTeam } from '@/lib/placeholder-data';
+import { useTeams, usePlayers, useStaff } from '@/lib/data-service';
 import type { Team } from '@/types';
 import styles from './page.module.css';
 
 export default function AdminTeamsPage() {
-  const [teamsState] = useState<Team[]>([...initialTeams]);
+  const { teams: teamsState } = useTeams();
+  const { getPlayersByTeam } = usePlayers();
+  const { getStaffByTeam } = useStaff();
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [editField, setEditField] = useState<string | null>(null);
   const [toast, setToast] = useState('');

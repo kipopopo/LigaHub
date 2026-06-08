@@ -1,9 +1,19 @@
 'use client';
 
-import { teams, fixtures, scores, media, players } from '@/lib/placeholder-data';
+import { useState } from 'react';
+import { useTeams, useFixtures, useScores, useMedia, usePlayers, seedFirestore } from '@/lib/data-service';
 import styles from './page.module.css';
 
 export default function AdminDashboard() {
+  const { teams } = useTeams();
+  const { fixtures } = useFixtures();
+  const { scores } = useScores();
+  const { media } = useMedia();
+  const { players } = usePlayers();
+
+  const [seeding, setSeeding] = useState(false);
+  const [seedLogs, setSeedLogs] = useState<string[]>([]);
+
   const completedMatches = fixtures.filter((f) => f.status === 'completed').length;
   const upcomingMatches = fixtures.filter((f) => f.status === 'upcoming').length;
   const totalGoals = scores.reduce((sum, s) => sum + s.homeScore + s.awayScore, 0);
@@ -18,6 +28,15 @@ export default function AdminDashboard() {
     { icon: '🎬', value: media.length, label: 'Media Items', color: 'var(--color-primary-light)' },
     { icon: '📊', value: `${(totalGoals / (completedMatches || 1)).toFixed(1)}`, label: 'Goals/Match', color: 'var(--color-accent-light)' },
   ];
+
+  const handleSeed = async () => {
+    if (!confirm('This will overwrite all Firestore data with placeholder data. Continue?')) return;
+    setSeeding(true);
+    setSeedLogs([]);
+    const logs = await seedFirestore();
+    setSeedLogs(logs);
+    setSeeding(false);
+  };
 
   return (
     <div id="admin-dashboard">
@@ -85,6 +104,31 @@ export default function AdminDashboard() {
           <span className={styles.actionLabel}>Add Media</span>
           <span className={styles.actionDesc}>Upload highlights & interviews</span>
         </a>
+      </div>
+
+      {/* Firestore Seed */}
+      <h2 className="heading-4" style={{ marginTop: 'var(--space-2xl)', marginBottom: 'var(--space-md)' }}>
+        Database Management
+      </h2>
+      <div className={`card ${styles.seedSection}`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: '0.3rem' }}>🌱 Seed Firestore</h4>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+              Push all placeholder data (teams, players, fixtures, etc.) to Firestore. This will overwrite existing data.
+            </p>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={handleSeed} disabled={seeding}>
+            {seeding ? '⏳ Seeding...' : '🚀 Seed All Data'}
+          </button>
+        </div>
+        {seedLogs.length > 0 && (
+          <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-sm)', background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', fontSize: 'var(--text-xs)', fontFamily: 'monospace' }}>
+            {seedLogs.map((log, i) => (
+              <div key={i} style={{ padding: '0.2rem 0' }}>{log}</div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

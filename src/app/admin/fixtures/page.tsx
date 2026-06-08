@@ -1,14 +1,21 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { fixtures as allFixtures, teams, scores as placeholderScores, getTeamById, getPlayersByTeam } from '@/lib/placeholder-data';
+import { useState, useMemo } from 'react';
+import { useTeams, useFixtures, useScores, usePlayers } from '@/lib/data-service';
 import { isFirebaseConfigured, getFirebaseDb } from '@/lib/firebase';
 import type { Fixture, Score, MatchEvent, Category, MatchStatus } from '@/types';
 import styles from './page.module.css';
 
 export default function AdminFixturesPage() {
+  const { teams } = useTeams();
+  const { fixtures: allFixtures } = useFixtures();
+  const { scores: loadedScores } = useScores();
+  const { getPlayersByTeam } = usePlayers();
+
+  const getTeamById = (id: string) => teams.find((t) => t.id === id);
+
   const [fixturesState, setFixturesState] = useState<Fixture[]>([...allFixtures]);
-  const [scoresState, setScoresState] = useState<Score[]>([...placeholderScores]);
+  const [scoresState, setScoresState] = useState<Score[]>([...loadedScores]);
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<MatchStatus | 'all'>('all');
   const [editingFixture, setEditingFixture] = useState<string | null>(null);
@@ -25,33 +32,12 @@ export default function AdminFixturesPage() {
   const [eventPlayerId, setEventPlayerId] = useState('');
   const [eventDescription, setEventDescription] = useState('');
 
-  // Load scores from Firestore on mount
-  useEffect(() => {
-    if (!isFirebaseConfigured()) return;
+  // Sync data from hooks when they load
+  useState(() => {
+    setFixturesState([...allFixtures]);
+    setScoresState([...loadedScores]);
+  });
 
-    (async () => {
-      try {
-        const { collection, getDocs } = await import('firebase/firestore');
-        const db = getFirebaseDb();
-        const snap = await getDocs(collection(db, 'scores'));
-        if (!snap.empty) {
-          const firestoreScores: Score[] = snap.docs.map((d) => d.data() as Score);
-          // Merge: Firestore scores override placeholder scores
-          setScoresState((prev) => {
-            const merged = [...prev];
-            firestoreScores.forEach((fs) => {
-              const idx = merged.findIndex((s) => s.fixtureId === fs.fixtureId);
-              if (idx >= 0) merged[idx] = fs;
-              else merged.push(fs);
-            });
-            return merged;
-          });
-        }
-      } catch {
-        // Firestore not available
-      }
-    })();
-  }, []);
 
   const filtered = useMemo(() => {
     return fixturesState.filter((f) => {

@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
-import { media } from '@/lib/placeholder-data';
+import { useMedia } from '@/lib/data-service';
 import type { MediaType, Category } from '@/types';
 import styles from './page.module.css';
 
 export default function MediaPage() {
   const { t } = useI18n();
+  const { media } = useMedia();
   const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);

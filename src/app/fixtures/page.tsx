@@ -1,42 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
-import { fixtures, getTeamById, getScoreByFixture, scores as placeholderScores } from '@/lib/placeholder-data';
-import { isFirebaseConfigured, getFirebaseDb } from '@/lib/firebase';
+import { useFixtures, useTeams, useScores } from '@/lib/data-service';
 import Legend from '@/components/ui/Legend';
 import MatchDetail from '@/components/match/MatchDetail';
-import type { Category, MatchStatus, Fixture, Score } from '@/types';
+import type { Category, MatchStatus, Fixture } from '@/types';
 import styles from './page.module.css';
 
 export default function FixturesPage() {
   const { t } = useI18n();
+  const { fixtures } = useFixtures();
+  const { getTeamById } = useTeams();
+  const { getScore } = useScores();
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<MatchStatus | 'all'>('all');
   const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
-  const [firestoreScores, setFirestoreScores] = useState<Score[]>([]);
-
-  // Load scores from Firestore
-  useEffect(() => {
-    if (!isFirebaseConfigured()) return;
-    (async () => {
-      try {
-        const { collection, getDocs } = await import('firebase/firestore');
-        const db = getFirebaseDb();
-        const snap = await getDocs(collection(db, 'scores'));
-        if (!snap.empty) {
-          setFirestoreScores(snap.docs.map((d) => d.data() as Score));
-        }
-      } catch {
-        // Firestore not available — use placeholder
-      }
-    })();
-  }, []);
-
-  // Helper: Firestore score takes priority over placeholder
-  const getScore = (fixtureId: string): Score | undefined => {
-    return firestoreScores.find((s) => s.fixtureId === fixtureId) || getScoreByFixture(fixtureId);
-  };
 
   const fixturesLegend = [
     { abbr: 'FT', meaning: t('legend.ft'), color: '#22c55e' },
