@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTeams, useFixtures, useScores, usePlayers } from '@/lib/data-service';
 import { isFirebaseConfigured, getFirebaseDb } from '@/lib/firebase';
-import type { Fixture, Score, MatchEvent, Category, MatchStatus } from '@/types';
+import type { Fixture, Score, MatchEvent, Category, MatchStatus, Round } from '@/types';
 import styles from './page.module.css';
 
 export default function AdminFixturesPage() {
@@ -14,8 +14,8 @@ export default function AdminFixturesPage() {
 
   const getTeamById = (id: string) => teams.find((t) => t.id === id);
 
-  const [fixturesState, setFixturesState] = useState<Fixture[]>([...allFixtures]);
-  const [scoresState, setScoresState] = useState<Score[]>([...loadedScores]);
+  const [fixturesState, setFixturesState] = useState<Fixture[]>([]);
+  const [scoresState, setScoresState] = useState<Score[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<Category | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<MatchStatus | 'all'>('all');
   const [editingFixture, setEditingFixture] = useState<string | null>(null);
@@ -32,12 +32,42 @@ export default function AdminFixturesPage() {
   const [eventPlayerId, setEventPlayerId] = useState('');
   const [eventDescription, setEventDescription] = useState('');
 
-  // Sync data from hooks when they load
-  useState(() => {
-    setFixturesState([...allFixtures]);
-    setScoresState([...loadedScores]);
-  });
+  // --- Add Fixture Form State ---
+  const [isAddingFixture, setIsAddingFixture] = useState(false);
+  const [newFixtureCategory, setNewFixtureCategory] = useState<Category>('U15');
+  const [newHomeTeamId, setNewHomeTeamId] = useState('');
+  const [newAwayTeamId, setNewAwayTeamId] = useState('');
+  const [newRound, setNewRound] = useState<Round>('group');
+  const [newMatchDate, setNewMatchDate] = useState('');
+  const [newVenue, setNewVenue] = useState('Pitch A');
+  const [newFixtureStatus, setNewFixtureStatus] = useState<MatchStatus>('upcoming');
+  const [newHomeScore, setNewHomeScore] = useState(0);
+  const [newAwayScore, setNewAwayScore] = useState(0);
 
+  // Sync data from hooks when they load
+  useEffect(() => {
+    setFixturesState(allFixtures);
+  }, [allFixtures]);
+
+  useEffect(() => {
+    setScoresState(loadedScores);
+  }, [loadedScores]);
+
+  // Filter teams dynamically based on selected category for fixture creation
+  const filteredTeamsForNewFixture = useMemo(() => {
+    return teams.filter(t => t.category === newFixtureCategory);
+  }, [teams, newFixtureCategory]);
+
+  // Handle auto-populating default teams when category changes
+  useEffect(() => {
+    if (filteredTeamsForNewFixture.length >= 2) {
+      setNewHomeTeamId(filteredTeamsForNewFixture[0].id);
+      setNewAwayTeamId(filteredTeamsForNewFixture[1].id);
+    } else {
+      setNewHomeTeamId('');
+      setNewAwayTeamId('');
+    }
+  }, [filteredTeamsForNewFixture]);
 
   const filtered = useMemo(() => {
     return fixturesState.filter((f) => {
@@ -109,11 +139,23 @@ export default function AdminFixturesPage() {
       try {
         const { doc, setDoc } = await import('firebase/firestore');
         const db = getFirebaseDb();
+        
+        // Save score
         await setDoc(doc(db, 'scores', fixtureId), scoreData);
+
+        // Save updated fixture status
+        const currentFixture = fixturesState.find((f) => f.id === fixtureId);
+        if (currentFixture) {
+          const updatedFixture = { ...currentFixture, status: 'completed' as const };
+          await setDoc(doc(db, 'fixtures', fixtureId), updatedFixture);
+        }
+        showToast('✅ Score & fixture updated in Firestore!');
       } catch (err) {
         console.error('Firestore save error:', err);
         showToast('⚠️ Saved locally but Firestore sync failed');
       }
+    } else {
+      showToast('✅ Score & events saved locally');
     }
 
     // Update local state
@@ -131,14 +173,122 @@ export default function AdminFixturesPage() {
 
     setEditingFixture(null);
     setSaving(false);
-    showToast('✅ Score & events saved to Firestore!');
   };
 
-  const setFixtureStatus = (fixtureId: string, status: MatchStatus) => {
+  const setFixtureStatus = async (fixtureId: string, status: MatchStatus) => {
+    // Save to Firestore
+    if (isFirebaseConfigured()) {
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        const currentFixture = fixturesState.find((f) => f.id === fixtureId);
+        if (currentFixture) {
+          const updatedFixture = { ...currentFixture, status };
+          await setDoc(doc(db, 'fixtures', fixtureId), updatedFixture);
+          showToast(`✅ Status updated to ${status} in Firestore!`);
+        }
+      } catch (err) {
+        console.error('Firestore status save error:', err);
+        showToast('⚠️ Status updated locally but Firestore sync failed');
+      }
+    } else {
+      showToast(`Status updated to ${status} locally`);
+    }
+
     setFixturesState((prev) =>
       prev.map((f) => (f.id === fixtureId ? { ...f, status } : f))
     );
-    showToast(`Status updated to ${status}`);
+  };
+
+  const handleAddFixture = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHomeTeamId || !newAwayTeamId) {
+      showToast('⚠️ Home Team and Away Team are required');
+      return;
+    }
+    if (newHomeTeamId === newAwayTeamId) {
+      showToast('⚠️ Home Team and Away Team cannot be the same');
+      return;
+    }
+    if (!newMatchDate) {
+      showToast('⚠️ Match date and time are required');
+      return;
+    }
+
+    setSaving(true);
+    const newFixtureId = `fixture-${Date.now()}`;
+    const homeTeamObj = teams.find(t => t.id === newHomeTeamId);
+
+    const newFixture: Fixture = {
+      id: newFixtureId,
+      tournamentId: 'tournament-2026',
+      groupId: homeTeamObj?.group ? `group-${newFixtureCategory.toLowerCase()}-${homeTeamObj.group.toLowerCase()}` : `group-${newFixtureCategory.toLowerCase()}-a`,
+      category: newFixtureCategory,
+      round: newRound,
+      homeTeamId: newHomeTeamId,
+      awayTeamId: newAwayTeamId,
+      matchDate: new Date(newMatchDate).toISOString(),
+      venue: newVenue,
+      status: newFixtureStatus,
+    };
+
+    // Save to Firestore
+    if (isFirebaseConfigured()) {
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        await setDoc(doc(db, 'fixtures', newFixtureId), newFixture);
+
+        // If completed, save scores too
+        if (newFixtureStatus === 'completed') {
+          const newScoreObj: Score = {
+            id: `score-${newFixtureId}`,
+            fixtureId: newFixtureId,
+            homeScore: newHomeScore,
+            awayScore: newAwayScore,
+            updatedAt: new Date().toISOString(),
+            updatedBy: 'admin',
+            events: [],
+          };
+          await setDoc(doc(db, 'scores', newFixtureId), newScoreObj);
+          setScoresState(prev => [...prev, newScoreObj]);
+        }
+
+        showToast('🚀 New fixture added to Firestore!');
+      } catch (err) {
+        console.error(err);
+        showToast('⚠️ Added locally, Firestore sync failed');
+      }
+    } else {
+      // Offline fallback
+      if (newFixtureStatus === 'completed') {
+        const newScoreObj: Score = {
+          id: `score-${newFixtureId}`,
+          fixtureId: newFixtureId,
+          homeScore: newHomeScore,
+          awayScore: newAwayScore,
+          updatedAt: new Date().toISOString(),
+          updatedBy: 'admin',
+          events: [],
+        };
+        setScoresState(prev => [...prev, newScoreObj]);
+      }
+      showToast('🚀 New fixture added locally');
+    }
+
+    setFixturesState(prev => [newFixture, ...prev]);
+    setIsAddingFixture(false);
+    resetAddFixtureForm();
+    setSaving(false);
+  };
+
+  const resetAddFixtureForm = () => {
+    setNewRound('group');
+    setNewMatchDate('');
+    setNewVenue('Pitch A');
+    setNewFixtureStatus('upcoming');
+    setNewHomeScore(0);
+    setNewAwayScore(0);
   };
 
   const eventIcon = (type: string) => {
@@ -156,23 +306,168 @@ export default function AdminFixturesPage() {
     <div id="admin-fixtures">
       <h1 className="heading-3" style={{ marginBottom: 'var(--space-lg)' }}>Fixtures & Scores</h1>
 
-      {/* Filters */}
-      <div className={styles.filters}>
-        <div className="tabs">
-          {(['all', 'U15', 'U17'] as const).map((cat) => (
-            <button key={cat} className={`tab ${categoryFilter === cat ? 'active' : ''}`} onClick={() => setCategoryFilter(cat)}>
-              {cat === 'all' ? 'All' : cat}
-            </button>
-          ))}
+      {/* Control Area: Filters and Add Fixture Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
+        <div className={styles.filters} style={{ margin: 0 }}>
+          <div className="tabs">
+            {(['all', 'U15', 'U17'] as const).map((cat) => (
+              <button key={cat} className={`tab ${categoryFilter === cat ? 'active' : ''}`} onClick={() => setCategoryFilter(cat)}>
+                {cat === 'all' ? 'All' : cat}
+              </button>
+            ))}
+          </div>
+          <div className="tabs">
+            {(['all', 'upcoming', 'live', 'completed'] as const).map((s) => (
+              <button key={s} className={`tab ${statusFilter === s ? 'active' : ''}`} onClick={() => setStatusFilter(s)}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="tabs">
-          {(['all', 'upcoming', 'live', 'completed'] as const).map((s) => (
-            <button key={s} className={`tab ${statusFilter === s ? 'active' : ''}`} onClick={() => setStatusFilter(s)}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
-          ))}
-        </div>
+
+        <button className="btn btn-primary" onClick={() => setIsAddingFixture(prev => !prev)}>
+          {isAddingFixture ? '✕ Close Form' : '➕ Add Fixture'}
+        </button>
       </div>
+
+      {/* Add Fixture Form */}
+      {isAddingFixture && (
+        <div className="card" style={{ padding: 'var(--space-lg)', marginBottom: 'var(--space-xl)', border: '1px solid var(--color-border-subtle)' }}>
+          <h2 className="heading-4" style={{ marginBottom: 'var(--space-md)' }}>➕ Add New Fixture</h2>
+          <form onSubmit={handleAddFixture} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
+                <label className={styles.fieldLabel}>Category</label>
+                <select
+                  className="input"
+                  value={newFixtureCategory}
+                  onChange={(e) => setNewFixtureCategory(e.target.value as Category)}
+                >
+                  <option value="U15">U15</option>
+                  <option value="U17">U17</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
+                <label className={styles.fieldLabel}>Round</label>
+                <select
+                  className="input"
+                  value={newRound}
+                  onChange={(e) => setNewRound(e.target.value as Round)}
+                >
+                  <option value="group">Group Stage</option>
+                  <option value="quarter">Quarter Final</option>
+                  <option value="semi">Semi Final</option>
+                  <option value="final">Final</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+                <label className={styles.fieldLabel}>Home Team *</label>
+                <select
+                  className="input"
+                  value={newHomeTeamId}
+                  onChange={(e) => setNewHomeTeamId(e.target.value)}
+                  required
+                >
+                  <option value="">Select home team...</option>
+                  {filteredTeamsForNewFixture.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} (Group {t.group})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+                <label className={styles.fieldLabel}>Away Team *</label>
+                <select
+                  className="input"
+                  value={newAwayTeamId}
+                  onChange={(e) => setNewAwayTeamId(e.target.value)}
+                  required
+                >
+                  <option value="">Select away team...</option>
+                  {filteredTeamsForNewFixture.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} (Group {t.group})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+                <label className={styles.fieldLabel}>Match Date & Time *</label>
+                <input
+                  type="datetime-local"
+                  className="input"
+                  value={newMatchDate}
+                  onChange={(e) => setNewMatchDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
+                <label className={styles.fieldLabel}>Venue</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="e.g. Pitch A"
+                  value={newVenue}
+                  onChange={(e) => setNewVenue(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
+                <label className={styles.fieldLabel}>Status</label>
+                <select
+                  className="input"
+                  value={newFixtureStatus}
+                  onChange={(e) => setNewFixtureStatus(e.target.value as MatchStatus)}
+                >
+                  <option value="upcoming">Upcoming</option>
+                  <option value="live">Live</option>
+                  <option value="completed">Completed (FT)</option>
+                </select>
+              </div>
+            </div>
+
+            {newFixtureStatus === 'completed' && (
+              <div className="card" style={{ padding: 'var(--space-sm)', background: 'var(--color-surface-hover)', display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+                <span className={styles.fieldLabel} style={{ margin: 0 }}>Initial Score:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                  <input
+                    type="number"
+                    min={0}
+                    className="input"
+                    value={newHomeScore}
+                    onChange={(e) => setNewHomeScore(Math.max(0, parseInt(e.target.value) || 0))}
+                    style={{ width: '60px', textAlign: 'center' }}
+                  />
+                  <span>-</span>
+                  <input
+                    type="number"
+                    min={0}
+                    className="input"
+                    value={newAwayScore}
+                    onChange={(e) => setNewAwayScore(Math.max(0, parseInt(e.target.value) || 0))}
+                    style={{ width: '60px', textAlign: 'center' }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {saving ? '⏳ Saving...' : '💾 Save Fixture'}
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={() => { setIsAddingFixture(false); resetAddFixtureForm(); }}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Fixtures List */}
       <div className={styles.fixturesList}>

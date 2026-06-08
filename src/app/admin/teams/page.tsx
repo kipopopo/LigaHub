@@ -1,21 +1,157 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTeams, usePlayers, useStaff } from '@/lib/data-service';
+import { isFirebaseConfigured, getFirebaseDb } from '@/lib/firebase';
 import type { Team } from '@/types';
 import styles from './page.module.css';
 
 export default function AdminTeamsPage() {
-  const { teams: teamsState } = useTeams();
+  const { teams: loadedTeams } = useTeams();
   const { getPlayersByTeam } = usePlayers();
   const { getStaffByTeam } = useStaff();
+
+  const [teamsState, setTeamsState] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [editField, setEditField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
   const [toast, setToast] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [isAddingTeam, setIsAddingTeam] = useState(false);
+
+  // Form states for creating a new team
+  const [newName, setNewName] = useState('');
+  const [newShortName, setNewShortName] = useState('');
+  const [newCategory, setNewCategory] = useState<'U15' | 'U17'>('U15');
+  const [newGroup, setNewGroup] = useState('A');
+  const [newLogoUrl, setNewLogoUrl] = useState('/images/teams/placeholder-logo.svg');
+  const [newDescription, setNewDescription] = useState('');
+  const [newPrimaryColor, setNewPrimaryColor] = useState('#e63946');
+  const [newSecondaryColor, setNewSecondaryColor] = useState('#1d3557');
+  const [newSlug, setNewSlug] = useState('');
+
+  // Sync loaded teams to local state
+  useEffect(() => {
+    setTeamsState(loadedTeams);
+  }, [loadedTeams]);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(''), 3000);
+  };
+
+  const startEditing = (field: string, currentVal: string) => {
+    setEditField(field);
+    setEditValue(currentVal);
+  };
+
+  const saveTeamField = async (field: keyof Team | 'colors.primary' | 'colors.secondary', value: any) => {
+    if (!selectedTeam) return;
+    setSaving(true);
+
+    let updatedTeam: Team;
+    if (field === 'colors.primary') {
+      updatedTeam = {
+        ...selectedTeam,
+        colors: { ...selectedTeam.colors, primary: value }
+      };
+    } else if (field === 'colors.secondary') {
+      updatedTeam = {
+        ...selectedTeam,
+        colors: { ...selectedTeam.colors, secondary: value }
+      };
+    } else {
+      updatedTeam = {
+        ...selectedTeam,
+        [field]: value
+      };
+      if (field === 'name') {
+        // Also auto-update slug if name changes and slug isn't customized
+        updatedTeam.slug = value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      }
+    }
+
+    // Save to Firestore
+    if (isFirebaseConfigured()) {
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        await setDoc(doc(db, 'teams', selectedTeam.id), updatedTeam);
+        showToast('✅ Team updated in Firestore!');
+      } catch (err) {
+        console.error(err);
+        showToast('⚠️ Firestore sync failed, updated locally');
+      }
+    } else {
+      showToast('✅ Team updated locally');
+    }
+
+    // Update local state
+    setTeamsState(prev => prev.map(t => t.id === selectedTeam.id ? updatedTeam : t));
+    setSelectedTeam(updatedTeam);
+    setEditField(null);
+    setSaving(false);
+  };
+
+  const handleAddTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName || !newShortName) {
+      showToast('⚠️ Name and Short Name are required');
+      return;
+    }
+
+    setSaving(true);
+    const generatedSlug = newSlug || newName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const newTeamId = `team-${Date.now()}`;
+
+    const newTeam: Team = {
+      id: newTeamId,
+      tournamentId: 'tournament-2026',
+      name: newName,
+      shortName: newShortName,
+      category: newCategory,
+      group: newGroup,
+      logoUrl: newLogoUrl,
+      description: newDescription,
+      colors: {
+        primary: newPrimaryColor,
+        secondary: newSecondaryColor,
+      },
+      slug: generatedSlug,
+    };
+
+    // Save to Firestore
+    if (isFirebaseConfigured()) {
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        await setDoc(doc(db, 'teams', newTeamId), newTeam);
+        showToast('🚀 New team added to Firestore!');
+      } catch (err) {
+        console.error(err);
+        showToast('⚠️ Added locally, Firestore sync failed');
+      }
+    } else {
+      showToast('🚀 New team added locally');
+    }
+
+    setTeamsState(prev => [...prev, newTeam]);
+    setSelectedTeam(newTeam);
+    setIsAddingTeam(false);
+    resetAddTeamForm();
+    setSaving(false);
+  };
+
+  const resetAddTeamForm = () => {
+    setNewName('');
+    setNewShortName('');
+    setNewCategory('U15');
+    setNewGroup('A');
+    setNewLogoUrl('/images/teams/placeholder-logo.svg');
+    setNewDescription('');
+    setNewPrimaryColor('#e63946');
+    setNewSecondaryColor('#1d3557');
+    setNewSlug('');
   };
 
   return (
@@ -25,14 +161,27 @@ export default function AdminTeamsPage() {
       <div className={styles.layout}>
         {/* Team List */}
         <div className={styles.teamList}>
-          <div className={styles.listHeader}>
+          <div className={styles.listHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'var(--color-surface)', zIndex: 1, borderBottom: '1px solid var(--color-border-subtle)', padding: 'var(--space-md)' }}>
             <span className={styles.listTitle}>Teams ({teamsState.length})</span>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setIsAddingTeam(true);
+                setSelectedTeam(null);
+              }}
+            >
+              ➕ Add Team
+            </button>
           </div>
           {teamsState.map((team) => (
             <button
               key={team.id}
               className={`${styles.teamItem} ${selectedTeam?.id === team.id ? styles.teamItemActive : ''}`}
-              onClick={() => setSelectedTeam(team)}
+              onClick={() => {
+                setSelectedTeam(team);
+                setIsAddingTeam(false);
+                setEditField(null);
+              }}
             >
               <img src={team.logoUrl} alt={team.name} className={styles.teamItemLogo} />
               <div className={styles.teamItemInfo}>
@@ -46,9 +195,133 @@ export default function AdminTeamsPage() {
           ))}
         </div>
 
-        {/* Team Detail */}
+        {/* Team Detail / Add Team Form */}
         <div className={styles.teamDetail}>
-          {selectedTeam ? (
+          {isAddingTeam ? (
+            <div className="card" style={{ padding: 'var(--space-lg)', border: '1px solid var(--color-border-subtle)' }}>
+              <h2 className="heading-4" style={{ marginBottom: 'var(--space-md)' }}>➕ Add New Team</h2>
+              <form onSubmit={handleAddTeam} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                <div className="form-group">
+                  <label className={styles.fieldLabel}>Team Name *</label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="e.g. Harimau Muda FC"
+                    value={newName}
+                    onChange={(e) => {
+                      setNewName(e.target.value);
+                      setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+                    }}
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className={styles.fieldLabel}>Short Name *</label>
+                    <input
+                      type="text"
+                      className="input"
+                      maxLength={3}
+                      placeholder="e.g. HRM"
+                      value={newShortName}
+                      onChange={(e) => setNewShortName(e.target.value.toUpperCase())}
+                      required
+                    />
+                  </div>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className={styles.fieldLabel}>Slug</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="harimau-muda-fc"
+                      value={newSlug}
+                      onChange={(e) => setNewSlug(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className={styles.fieldLabel}>Category</label>
+                    <select
+                      className="input"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value as 'U15' | 'U17')}
+                    >
+                      <option value="U15">U15</option>
+                      <option value="U17">U17</option>
+                    </select>
+                  </div>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className={styles.fieldLabel}>Group</label>
+                    <select
+                      className="input"
+                      value={newGroup}
+                      onChange={(e) => setNewGroup(e.target.value)}
+                    >
+                      <option value="A">Group A</option>
+                      <option value="B">Group B</option>
+                      <option value="C">Group C</option>
+                      <option value="D">Group D</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className={styles.fieldLabel}>Logo URL</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={newLogoUrl}
+                    onChange={(e) => setNewLogoUrl(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className={styles.fieldLabel}>Description</label>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    placeholder="Brief description..."
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--space-lg)' }}>
+                  <div className="form-group">
+                    <label className={styles.fieldLabel}>Primary Color</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                      <input
+                        type="color"
+                        value={newPrimaryColor}
+                        onChange={(e) => setNewPrimaryColor(e.target.value)}
+                        style={{ border: 'none', width: '40px', height: '40px', padding: 0, cursor: 'pointer', borderRadius: '4px' }}
+                      />
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{newPrimaryColor}</span>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className={styles.fieldLabel}>Secondary Color</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                      <input
+                        type="color"
+                        value={newSecondaryColor}
+                        onChange={(e) => setNewSecondaryColor(e.target.value)}
+                        style={{ border: 'none', width: '40px', height: '40px', padding: 0, cursor: 'pointer', borderRadius: '4px' }}
+                      />
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{newSecondaryColor}</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
+                  <button type="submit" className="btn btn-primary" disabled={saving}>
+                    {saving ? '⏳ Saving...' : '💾 Save Team'}
+                  </button>
+                  <button type="button" className="btn btn-ghost" onClick={() => { setIsAddingTeam(false); resetAddTeamForm(); }}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : selectedTeam ? (
             <>
               {/* Header */}
               <div className={styles.detailHeader} style={{ background: `linear-gradient(135deg, ${selectedTeam.colors.primary}22, ${selectedTeam.colors.secondary}15)` }}>
@@ -64,47 +337,155 @@ export default function AdminTeamsPage() {
 
               {/* Editable Fields */}
               <div className={styles.fields}>
+                {/* Name */}
                 <div className={styles.fieldRow}>
                   <label className={styles.fieldLabel}>Team Name</label>
                   <div className={styles.fieldValue}>
                     {editField === 'name' ? (
                       <div className={styles.editRow}>
-                        <input className="input" defaultValue={selectedTeam.name} style={{ flex: 1 }} />
-                        <button className="btn btn-primary btn-sm" onClick={() => { setEditField(null); showToast('✅ Team name updated!'); }}>Save</button>
+                        <input className="input" value={editValue} onChange={(e) => setEditValue(e.target.value)} style={{ flex: 1 }} />
+                        <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveTeamField('name', editValue)}>Save</button>
                         <button className="btn btn-ghost btn-sm" onClick={() => setEditField(null)}>✕</button>
                       </div>
                     ) : (
                       <div className={styles.displayRow}>
                         <span>{selectedTeam.name}</span>
-                        <button className={styles.editBtn} onClick={() => setEditField('name')}>✏️</button>
+                        <button className={styles.editBtn} onClick={() => startEditing('name', selectedTeam.name)}>✏️</button>
                       </div>
                     )}
                   </div>
                 </div>
 
+                {/* Short Name */}
                 <div className={styles.fieldRow}>
                   <label className={styles.fieldLabel}>Short Name</label>
-                  <div className={styles.displayRow}>
-                    <span>{selectedTeam.shortName}</span>
-                    <button className={styles.editBtn} onClick={() => showToast('✏️ Edit mode (demo)')}>✏️</button>
+                  <div className={styles.fieldValue}>
+                    {editField === 'shortName' ? (
+                      <div className={styles.editRow}>
+                        <input className="input" maxLength={3} value={editValue} onChange={(e) => setEditValue(e.target.value.toUpperCase())} style={{ flex: 1 }} />
+                        <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveTeamField('shortName', editValue)}>Save</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => setEditField(null)}>✕</button>
+                      </div>
+                    ) : (
+                      <div className={styles.displayRow}>
+                        <span>{selectedTeam.shortName}</span>
+                        <button className={styles.editBtn} onClick={() => startEditing('shortName', selectedTeam.shortName)}>✏️</button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
+                {/* Category & Group */}
+                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                  <div className={styles.fieldRow} style={{ flex: 1 }}>
+                    <label className={styles.fieldLabel}>Category</label>
+                    <div className={styles.fieldValue}>
+                      {editField === 'category' ? (
+                        <div className={styles.editRow}>
+                          <select className="input" value={editValue} onChange={(e) => setEditValue(e.target.value)} style={{ flex: 1 }}>
+                            <option value="U15">U15</option>
+                            <option value="U17">U17</option>
+                          </select>
+                          <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveTeamField('category', editValue)}>Save</button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => setEditField(null)}>✕</button>
+                        </div>
+                      ) : (
+                        <div className={styles.displayRow}>
+                          <span>{selectedTeam.category}</span>
+                          <button className={styles.editBtn} onClick={() => startEditing('category', selectedTeam.category)}>✏️</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.fieldRow} style={{ flex: 1 }}>
+                    <label className={styles.fieldLabel}>Group</label>
+                    <div className={styles.fieldValue}>
+                      {editField === 'group' ? (
+                        <div className={styles.editRow}>
+                          <select className="input" value={editValue} onChange={(e) => setEditValue(e.target.value)} style={{ flex: 1 }}>
+                            <option value="A">Group A</option>
+                            <option value="B">Group B</option>
+                            <option value="C">Group C</option>
+                            <option value="D">Group D</option>
+                          </select>
+                          <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveTeamField('group', editValue)}>Save</button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => setEditField(null)}>✕</button>
+                        </div>
+                      ) : (
+                        <div className={styles.displayRow}>
+                          <span>{selectedTeam.group}</span>
+                          <button className={styles.editBtn} onClick={() => startEditing('group', selectedTeam.group)}>✏️</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Logo URL */}
+                <div className={styles.fieldRow}>
+                  <label className={styles.fieldLabel}>Logo URL</label>
+                  <div className={styles.fieldValue}>
+                    {editField === 'logoUrl' ? (
+                      <div className={styles.editRow}>
+                        <input className="input" value={editValue} onChange={(e) => setEditValue(e.target.value)} style={{ flex: 1 }} />
+                        <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveTeamField('logoUrl', editValue)}>Save</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => setEditField(null)}>✕</button>
+                      </div>
+                    ) : (
+                      <div className={styles.displayRow}>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {selectedTeam.logoUrl}
+                        </span>
+                        <button className={styles.editBtn} onClick={() => startEditing('logoUrl', selectedTeam.logoUrl)}>✏️</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
                 <div className={styles.fieldRow}>
                   <label className={styles.fieldLabel}>Description</label>
-                  <div className={styles.displayRow}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>{selectedTeam.description}</span>
-                    <button className={styles.editBtn} onClick={() => showToast('✏️ Edit mode (demo)')}>✏️</button>
+                  <div className={styles.fieldValue}>
+                    {editField === 'description' ? (
+                      <div className={styles.editRow} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                        <textarea className="input" rows={3} value={editValue} onChange={(e) => setEditValue(e.target.value)} />
+                        <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
+                          <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveTeamField('description', editValue)}>Save</button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => setEditField(null)}>✕</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.displayRow}>
+                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>{selectedTeam.description}</span>
+                        <button className={styles.editBtn} onClick={() => startEditing('description', selectedTeam.description)}>✏️</button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
+                {/* Colors */}
                 <div className={styles.fieldRow}>
                   <label className={styles.fieldLabel}>Colors</label>
                   <div className={styles.colorPreview}>
-                    <span className={styles.colorSwatch} style={{ background: selectedTeam.colors.primary }} />
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{selectedTeam.colors.primary}</span>
-                    <span className={styles.colorSwatch} style={{ background: selectedTeam.colors.secondary }} />
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{selectedTeam.colors.secondary}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                      <input
+                        type="color"
+                        value={selectedTeam.colors.primary}
+                        onChange={(e) => saveTeamField('colors.primary', e.target.value)}
+                        style={{ border: 'none', width: '28px', height: '28px', padding: 0, cursor: 'pointer', borderRadius: '4px' }}
+                      />
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{selectedTeam.colors.primary} (Primary)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', marginLeft: 'var(--space-md)' }}>
+                      <input
+                        type="color"
+                        value={selectedTeam.colors.secondary}
+                        onChange={(e) => saveTeamField('colors.secondary', e.target.value)}
+                        style={{ border: 'none', width: '28px', height: '28px', padding: 0, cursor: 'pointer', borderRadius: '4px' }}
+                      />
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{selectedTeam.colors.secondary} (Secondary)</span>
+                    </div>
                   </div>
                 </div>
               </div>
