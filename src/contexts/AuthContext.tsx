@@ -53,8 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isFirebaseConfigured()) {
       import('firebase/auth').then(({ onAuthStateChanged }) => {
         const auth = getFirebaseAuth();
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
           if (firebaseUser) {
+            // Check Firestore for admin role
+            let role: UserRole = 'fan';
+            try {
+              const { doc, getDoc } = await import('firebase/firestore');
+              const { getFirebaseDb } = await import('@/lib/firebase');
+              const userDoc = await getDoc(doc(getFirebaseDb(), 'users', firebaseUser.uid));
+              if (userDoc.exists() && userDoc.data()?.role === 'admin') {
+                role = 'admin';
+              }
+            } catch {
+              // Firestore not available — continue as fan
+            }
+
             const appUser: AppUser = {
               id: firebaseUser.uid,
               email: firebaseUser.email || '',
@@ -62,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               photoUrl: firebaseUser.photoURL || '',
               createdAt: new Date().toISOString(),
               favoriteTeams: [],
-              role: 'fan',
+              role,
               language: 'en',
             };
             setUser(appUser);
