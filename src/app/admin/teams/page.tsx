@@ -187,6 +187,29 @@ export default function AdminTeamsPage() {
     setNewSlug('');
   };
 
+  const handleDeleteTeam = async (teamId: string) => {
+    if (!confirm('⚠️ Are you sure you want to delete this team? This action cannot be undone.')) return;
+    setSaving(true);
+
+    if (isFirebaseConfigured()) {
+      try {
+        const { doc, deleteDoc } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        await deleteDoc(doc(db, 'teams', teamId));
+        showToast('🗑️ Team deleted from Firestore');
+      } catch (err) {
+        console.error(err);
+        showToast('⚠️ Deleted locally, Firestore sync failed');
+      }
+    } else {
+      showToast('🗑️ Team deleted locally');
+    }
+
+    setTeamsState(prev => prev.filter(t => t.id !== teamId));
+    setSelectedTeam(null);
+    setSaving(false);
+  };
+
   return (
     <div id="admin-teams">
       <h1 className="heading-3" style={{ marginBottom: 'var(--space-lg)' }}>Team Management</h1>
@@ -371,15 +394,25 @@ export default function AdminTeamsPage() {
           ) : selectedTeam ? (
             <>
               {/* Header */}
-              <div className={styles.detailHeader} style={{ background: `linear-gradient(135deg, ${selectedTeam.colors.primary}22, ${selectedTeam.colors.secondary}15)` }}>
-                <img src={selectedTeam.logoUrl} alt={selectedTeam.name} className={styles.detailLogo} />
-                <div>
-                  <h2 className="heading-4">{selectedTeam.name}</h2>
-                  <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
-                    <span className="badge badge-primary">{selectedTeam.category}</span>
-                    <span className="badge badge-primary" style={{ opacity: 0.7 }}>Group {selectedTeam.group}</span>
+              <div className={styles.detailHeader} style={{ background: `linear-gradient(135deg, ${selectedTeam.colors.primary}22, ${selectedTeam.colors.secondary}15)`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-lg)' }}>
+                  <img src={selectedTeam.logoUrl} alt={selectedTeam.name} className={styles.detailLogo} />
+                  <div>
+                    <h2 className="heading-4">{selectedTeam.name}</h2>
+                    <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
+                      <span className="badge badge-primary">{selectedTeam.category}</span>
+                      <span className="badge badge-primary" style={{ opacity: 0.7 }}>Group {selectedTeam.group}</span>
+                    </div>
                   </div>
                 </div>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => handleDeleteTeam(selectedTeam.id)}
+                  style={{ color: 'var(--color-danger)', border: '1px solid var(--color-danger)' }}
+                  disabled={saving}
+                >
+                  🗑️ Delete Team
+                </button>
               </div>
 
               {/* Editable Fields */}

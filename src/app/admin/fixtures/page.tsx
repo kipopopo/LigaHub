@@ -291,6 +291,35 @@ export default function AdminFixturesPage() {
     setNewAwayScore(0);
   };
 
+  const handleDeleteFixture = async (fixtureId: string) => {
+    if (!confirm('⚠️ Are you sure you want to delete this fixture? This will also delete its scores.')) return;
+    setSaving(true);
+
+    if (isFirebaseConfigured()) {
+      try {
+        const { doc, deleteDoc } = await import('firebase/firestore');
+        const db = getFirebaseDb();
+        
+        // Delete fixture doc
+        await deleteDoc(doc(db, 'fixtures', fixtureId));
+        
+        // Delete score doc if exists
+        await deleteDoc(doc(db, 'scores', fixtureId));
+        
+        showToast('🗑️ Fixture and scores deleted from Firestore');
+      } catch (err) {
+        console.error(err);
+        showToast('⚠️ Deleted locally, Firestore sync failed');
+      }
+    } else {
+      showToast('🗑️ Fixture deleted locally');
+    }
+
+    setFixturesState((prev) => prev.filter((f) => f.id !== fixtureId));
+    setScoresState((prev) => prev.filter((s) => s.fixtureId !== fixtureId));
+    setSaving(false);
+  };
+
   const eventIcon = (type: string) => {
     switch (type) {
       case 'goal': return '⚽';
@@ -669,6 +698,14 @@ export default function AdminFixturesPage() {
                         ✅ End Match
                       </button>
                     )}
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => handleDeleteFixture(fixture.id)}
+                      style={{ color: 'var(--color-danger)', marginLeft: 'auto' }}
+                      disabled={saving}
+                    >
+                      🗑️ Delete
+                    </button>
                   </>
                 )}
               </div>
