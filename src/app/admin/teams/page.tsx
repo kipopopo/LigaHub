@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTeams, usePlayers, useStaff } from '@/lib/data-service';
-import { isFirebaseConfigured, getFirebaseDb } from '@/lib/firebase';
+import { isFirebaseConfigured, getFirebaseDb, getFirebaseStorage } from '@/lib/firebase';
 import type { Team } from '@/types';
 import styles from './page.module.css';
 
@@ -24,7 +24,8 @@ export default function AdminTeamsPage() {
   const [newShortName, setNewShortName] = useState('');
   const [newCategory, setNewCategory] = useState<'U15' | 'U17'>('U15');
   const [newGroup, setNewGroup] = useState('A');
-  const [newLogoUrl, setNewLogoUrl] = useState('/images/teams/placeholder-logo.svg');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('/images/teams/placeholder-logo.svg');
   const [newDescription, setNewDescription] = useState('');
   const [newPrimaryColor, setNewPrimaryColor] = useState('#e63946');
   const [newSecondaryColor, setNewSecondaryColor] = useState('#1d3557');
@@ -43,6 +44,26 @@ export default function AdminTeamsPage() {
   const startEditing = (field: string, currentVal: string) => {
     setEditField(field);
     setEditValue(currentVal);
+  };
+
+  const handleLogoUpload = async (file: File, teamId: string): Promise<string> => {
+    if (!isFirebaseConfigured()) {
+      // Offline fallback: return a local blob URL
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(URL.createObjectURL(file));
+        }, 1000);
+      });
+    }
+
+    const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+    const storage = getFirebaseStorage();
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+    const storageRef = ref(storage, `teams/${teamId}/logo-${Date.now()}-${cleanFileName}`);
+    
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadUrl = await getDownloadURL(snapshot.ref);
+    return downloadUrl;
   };
 
   const saveTeamField = async (field: keyof Team | 'colors.primary' | 'colors.secondary', value: any) => {
@@ -101,8 +122,19 @@ export default function AdminTeamsPage() {
     }
 
     setSaving(true);
-    const generatedSlug = newSlug || newName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const newTeamId = `team-${Date.now()}`;
+    const generatedSlug = newSlug || newName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+    let uploadedLogoUrl = '/images/teams/placeholder-logo.svg';
+    if (logoFile) {
+      showToast('⏳ Uploading team logo...');
+      try {
+        uploadedLogoUrl = await handleLogoUpload(logoFile, newTeamId);
+      } catch (err) {
+        console.error('Logo upload error:', err);
+        showToast('⚠️ Logo upload failed, using default');
+      }
+    }
 
     const newTeam: Team = {
       id: newTeamId,
@@ -111,7 +143,7 @@ export default function AdminTeamsPage() {
       shortName: newShortName,
       category: newCategory,
       group: newGroup,
-      logoUrl: newLogoUrl,
+      logoUrl: uploadedLogoUrl,
       description: newDescription,
       colors: {
         primary: newPrimaryColor,
@@ -147,7 +179,8 @@ export default function AdminTeamsPage() {
     setNewShortName('');
     setNewCategory('U15');
     setNewGroup('A');
-    setNewLogoUrl('/images/teams/placeholder-logo.svg');
+    setLogoFile(null);
+    setLogoPreview('/images/teams/placeholder-logo.svg');
     setNewDescription('');
     setNewPrimaryColor('#e63946');
     setNewSecondaryColor('#1d3557');
@@ -266,13 +299,27 @@ export default function AdminTeamsPage() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label className={styles.fieldLabel}>Logo URL</label>
-                  <input
-                    type="text"
-                    className="input"
-                    value={newLogoUrl}
-                    onChange={(e) => setNewLogoUrl(e.target.value)}
-                  />
+                  <label className={styles.fieldLabel}>Team Logo (Upload) *</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                    <img
+                      src={logoPreview}
+                      alt="Logo Preview"
+                      style={{ width: '48px', height: '48px', objectFit: 'contain', background: 'var(--color-surface-hover)', borderRadius: 'var(--radius-md)', padding: '4px' }}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setLogoFile(file);
+                          setLogoPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                      style={{ flex: 1 }}
+                      required
+                    />
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className={styles.fieldLabel}>Description</label>
@@ -424,20 +471,49 @@ export default function AdminTeamsPage() {
 
                 {/* Logo URL */}
                 <div className={styles.fieldRow}>
-                  <label className={styles.fieldLabel}>Logo URL</label>
+                  <label className={styles.fieldLabel}>Team Logo</label>
                   <div className={styles.fieldValue}>
                     {editField === 'logoUrl' ? (
-                      <div className={styles.editRow}>
-                        <input className="input" value={editValue} onChange={(e) => setEditValue(e.target.value)} style={{ flex: 1 }} />
-                        <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => saveTeamField('logoUrl', editValue)}>Save</button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => setEditField(null)}>✕</button>
+                      <div className={styles.editRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 'var(--space-sm)', width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', width: '100%' }}>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setSaving(true);
+                                showToast('⏳ Uploading team logo...');
+                                try {
+                                  const url = await handleLogoUpload(file, selectedTeam.id);
+                                  await saveTeamField('logoUrl', url);
+                                } catch (err) {
+                                  console.error(err);
+                                  showToast('❌ Logo upload failed');
+                                } finally {
+                                  setSaving(false);
+                                  setEditField(null);
+                                }
+                              }
+                            }}
+                            style={{ flex: 1 }}
+                          />
+                        </div>
+                        <button className="btn btn-ghost btn-sm" onClick={() => setEditField(null)}>Cancel</button>
                       </div>
                     ) : (
                       <div className={styles.displayRow}>
-                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {selectedTeam.logoUrl}
-                        </span>
-                        <button className={styles.editBtn} onClick={() => startEditing('logoUrl', selectedTeam.logoUrl)}>✏️</button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                          <img
+                            src={selectedTeam.logoUrl}
+                            alt={selectedTeam.name}
+                            style={{ width: '32px', height: '32px', objectFit: 'contain', background: 'var(--color-surface-hover)', borderRadius: 'var(--radius-sm)', padding: '2px' }}
+                          />
+                          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', wordBreak: 'break-all', maxWidth: '250px' }}>
+                            {selectedTeam.logoUrl.startsWith('blob:') ? 'Local Preview File' : selectedTeam.logoUrl}
+                          </span>
+                        </div>
+                        <button className={styles.editBtn} onClick={() => setEditField('logoUrl')}>✏️ Upload New Logo</button>
                       </div>
                     )}
                   </div>
